@@ -84,7 +84,7 @@ from __future__ import division
 import math
 from .. import parser
 from ..auxiliary import PyteomicsError, _nist_mass, BasicComposition
-from itertools import chain, product, combinations_with_replacement
+from itertools import chain, product, combinations_with_replacement, islice
 from collections import defaultdict
 try:
     from urllib import urlopen
@@ -833,8 +833,12 @@ def isotopologues(*args, **kwargs):
         The threshold abundance of a specific isotope to be considered.
         Default is :py:const:`5e-4`.
     overall_threshold : float, optional
-        The threshold abundance of the calculateed isotopic composition.
+        The threshold abundance of the calculated isotopic composition.
         Default is :py:const:`0`.
+    isotopes_combination_truncation : int, optional
+        Max number of isotopes combinations to be considered for each element.
+        Can greatly improve speed with small accuracy cost.
+        Default is None (use all of them)
     aa_comp : dict, optional
         A dict with the elemental composition of the amino acids (the
         default value is :py:data:`std_aa_comp`).
@@ -847,6 +851,7 @@ def isotopologues(*args, **kwargs):
     out : iterator
         Iterator over possible isotopic compositions.
     """
+    truncation = kwargs.pop("isotopes_combination_truncation", None)
     iso_threshold = kwargs.pop('isotope_threshold', 5e-4)
     overall_threshold = kwargs.pop('overall_threshold', 0.0)
     mass_data = kwargs.get('mass_data', nist_mass)
@@ -870,7 +875,7 @@ def isotopologues(*args, **kwargs):
     for element, list_isotopes in dict_elem_isotopes.items():
         n = composition[element]
         list_comb_element_n = []
-        for elementXn in combinations_with_replacement(list_isotopes, n):
+        for elementXn in islice(combinations_with_replacement(list_isotopes, n), truncation):
             list_comb_element_n.append(elementXn)
         all_isotoplogues.append(list_comb_element_n)
 
